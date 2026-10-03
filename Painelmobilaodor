@@ -1,0 +1,407 @@
+--// Painel KWXHY
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+--// Evita duplicar
+if CoreGui:FindFirstChild("PainelKWXHY") then
+    CoreGui.PainelKWXHY:Destroy()
+end
+
+--// Estados
+local pesoAtivo = false
+local audioConexao = nil
+local lightingAplicado = false
+
+--// GUI Principal
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "PainelKWXHY"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui:FindFirstChild("RobloxGui") or CoreGui
+
+local Main = Instance.new("Frame")
+Main.Size = UDim2.new(0, 240, 0, 364)
+Main.Position = UDim2.new(0.05, 0, 0.25, 0)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Main.BorderSizePixel = 0
+Main.Active = true
+Main.Draggable = true
+Main.Parent = ScreenGui
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+local Stroke = Instance.new("UIStroke", Main)
+Stroke.Color = Color3.fromRGB(255, 20, 147)
+Stroke.Thickness = 2
+
+--// TÃ­tulo
+local Titulo = Instance.new("TextLabel")
+Titulo.Size = UDim2.new(1, 0, 0, 35)
+Titulo.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+Titulo.BorderSizePixel = 0
+Titulo.Text = "âš¡ KWXHY âš¡"
+Titulo.TextColor3 = Color3.fromRGB(255, 255, 255)
+Titulo.Font = Enum.Font.GothamBold
+Titulo.TextSize = 16
+Titulo.Parent = Main
+Instance.new("UICorner", Titulo).CornerRadius = UDim.new(0, 10)
+
+--// FunÃ§Ã£o para criar botÃ£o toggle
+local function criarBotao(nome, yPos, callback)
+    local Botao = Instance.new("TextButton")
+    Botao.Size = UDim2.new(0, 200, 0, 40)
+    Botao.Position = UDim2.new(0, 20, 0, yPos)
+    Botao.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+    Botao.BorderSizePixel = 0
+    Botao.Text = nome .. ": âŒ DESATIVADO"
+    Botao.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Botao.Font = Enum.Font.GothamBold
+    Botao.TextSize = 12
+    Botao.Parent = Main
+    Instance.new("UICorner", Botao).CornerRadius = UDim.new(0, 8)
+    
+    local StrokeBotao = Instance.new("UIStroke", Botao)
+    StrokeBotao.Color = Color3.fromRGB(90, 90, 110)
+    StrokeBotao.Thickness = 1
+    
+    local ativo = false
+    Botao.MouseButton1Click:Connect(function()
+        ativo = not ativo
+        if ativo then
+            Botao.Text = nome .. ": âœ… ATIVADO"
+            Botao.BackgroundColor3 = Color3.fromRGB(255, 20, 147)
+            StrokeBotao.Color = Color3.fromRGB(255, 105, 180)
+            callback(true)
+        else
+            Botao.Text = nome .. ": âŒ DESATIVADO"
+            Botao.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+            StrokeBotao.Color = Color3.fromRGB(90, 90, 110)
+            callback(false)
+        end
+    end)
+    
+    return Botao
+end
+
+--// ============ SCRIPTS ============
+local function executarUII1000X()
+    local ok, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ZoeWarOnTop/System-V3.3/refs/heads/main/System-V3.3"))()
+    end)
+    if not ok then warn("[UII1000X] Erro:", err) end
+end
+
+local function executarCrosshair()
+    local ok, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/maconhacompresunto230-design/Cross-hair/refs/heads/main/Script.lua"))()
+    end)
+    if not ok then warn("[Crosshair] Erro:", err) end
+end
+
+local function executarSpeedBitotoso()
+    local ok, err = pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/bitotoso/speed/refs/heads/main/script.lua"))()
+    end)
+    if not ok then warn("[SpeedBitotoso] Erro:", err) end
+end
+
+--// ============ ÃUDIO 2:1 ============
+local function aplicarAjuste(som)
+    if som:IsA("Sound") then
+        if som:FindFirstChild("Configurado") then return end
+        
+        local marcador = Instance.new("BoolValue")
+        marcador.Name = "Configurado"
+        marcador.Parent = som
+
+        som.Volume = 1
+        
+        local eq = Instance.new("EqualizerSoundEffect")
+        eq.LowGain = 5
+        eq.MidGain = -12
+        eq.HighGain = 5
+        eq.Parent = som
+        
+        local comp = Instance.new("CompressorSoundEffect")
+        comp.Threshold = -20
+        comp.Ratio = 4
+        comp.Attack = 0.01
+        comp.Parent = som
+    end
+end
+
+local function removerAjusteAudio()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("Sound") then
+            local marcador = v:FindFirstChild("Configurado")
+            if marcador then marcador:Destroy() end
+            local eq = v:FindFirstChildOfClass("EqualizerSoundEffect")
+            if eq then eq:Destroy() end
+            local comp = v:FindFirstChildOfClass("CompressorSoundEffect")
+            if comp then comp:Destroy() end
+        end
+    end
+end
+
+local function ativarAudio()
+    for _, v in pairs(game:GetDescendants()) do
+        aplicarAjuste(v)
+    end
+    audioConexao = game.DescendantAdded:Connect(aplicarAjuste)
+end
+
+local function desativarAudio()
+    if audioConexao then
+        audioConexao:Disconnect()
+        audioConexao = nil
+    end
+    removerAjusteAudio()
+end
+
+--// ============ MM2 2024 FINAL CLIP LIGHTING ============
+local LightingBackup = nil
+local lightingConexoes = {}
+
+local function backupLighting()
+    LightingBackup = {
+        Technology = Lighting.Technology,
+        GlobalShadows = Lighting.GlobalShadows,
+        ShadowSoftness = Lighting.ShadowSoftness,
+        Brightness = Lighting.Brightness,
+        ExposureCompensation = Lighting.ExposureCompensation,
+        EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+        EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+        Ambient = Lighting.Ambient,
+        OutdoorAmbient = Lighting.OutdoorAmbient,
+        FogStart = Lighting.FogStart,
+        FogEnd = Lighting.FogEnd,
+        ColorCorrection = nil,
+    }
+    local cc = Lighting:FindFirstChild("MM22024FinalClip")
+    if cc then LightingBackup.ColorCorrection = cc:Clone() end
+end
+
+local function aplicarLighting()
+    if _G.MM2_2024_FINAL_CLIP then return end
+    _G.MM2_2024_FINAL_CLIP = true
+    lightingAplicado = true
+
+    backupLighting()
+
+    local Terrain = Workspace:FindFirstChildOfClass("Terrain")
+
+    -- Remove FX
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Atmosphere") or v:IsA("BloomEffect") or v:IsA("SunRaysEffect")
+        or v:IsA("BlurEffect") or v:IsA("DepthOfFieldEffect") then
+            v:Destroy()
+        end
+    end
+
+    -- Base lighting
+    pcall(function() Lighting.Technology = Enum.Technology.Future end)
+    Lighting.GlobalShadows = true
+    Lighting.ShadowSoftness = 0.08
+    Lighting.Brightness = 2.05
+    Lighting.ExposureCompensation = 0.035
+    Lighting.EnvironmentDiffuseScale = 0.18
+    Lighting.EnvironmentSpecularScale = 0
+    Lighting.Ambient = Color3.fromRGB(176, 176, 176)
+    Lighting.OutdoorAmbient = Color3.fromRGB(162, 162, 162)
+    Lighting.FogStart = 0
+    Lighting.FogEnd = 100000
+
+    -- Water
+    if Terrain then
+        Terrain.WaterWaveSize = 0
+        Terrain.WaterWaveSpeed = 0
+        Terrain.WaterReflectance = 0
+        Terrain.WaterTransparency = 0.2
+    end
+
+    -- Color Correction
+    local cc = Instance.new("ColorCorrectionEffect")
+    cc.Name = "MM22024FinalClip"
+    cc.Saturation = -0.012
+    cc.Contrast = 0.012
+    cc.Brightness = 0.012
+    cc.Parent = Lighting
+
+    -- Detect inside/outside
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    params.FilterDescendantsInstances = {}
+
+    local function IsOutside(pos)
+        local result = Workspace:Raycast(pos, Vector3.new(0, 120, 0), params)
+        return result == nil
+    end
+
+    -- Aplicar em luzes existentes
+    local function aplicarLuz(light)
+        if light:IsA("PointLight") or light:IsA("SpotLight") or light:IsA("SurfaceLight") then
+            local parent = light.Parent
+            if parent and parent:IsA("BasePart") then
+                local outside = IsOutside(parent.Position)
+
+                if light.Color.R > 0.95 and light.Color.G > 0.95 and light.Color.B > 0.95 then
+                    light.Color = Color3.fromRGB(240, 240, 236)
+                end
+
+                light.Shadows = light.Brightness > 1.15
+
+                if not outside then
+                    light.Brightness = math.clamp(light.Brightness, 0.95, 1.22)
+                    light.Range = math.clamp(light.Range, 0, 10)
+                    if light:IsA("SurfaceLight") then
+                        light.Brightness *= 0.68
+                        light.Range *= 0.72
+                        light.Angle = math.min(light.Angle, 82)
+                    end
+                else
+                    light.Brightness = math.clamp(light.Brightness, 0.86, 1.08)
+                    light.Range = math.clamp(light.Range, 0, 11)
+                    if light:IsA("SurfaceLight") then
+                        light.Brightness *= 0.86
+                        light.Range *= 0.9
+                    end
+                end
+
+                if light.Color.B > light.Color.R or light.Color.G > light.Color.R then
+                    light.Range *= 0.72
+                    light.Brightness *= 0.9
+                end
+            end
+        end
+    end
+
+    for _, light in ipairs(Workspace:GetDescendants()) do
+        aplicarLuz(light)
+    end
+
+    -- Reflection fix
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if obj.Material == Enum.Material.Metal then
+                obj.Reflectance = math.min(obj.Reflectance, 0.012)
+            end
+            if obj.Material == Enum.Material.SmoothPlastic or obj.Material == Enum.Material.Neon then
+                obj.Reflectance = 0
+            end
+        end
+    end
+end
+
+local function removerLighting()
+    _G.MM2_2024_FINAL_CLIP = false
+    lightingAplicado = false
+
+    if LightingBackup then
+        pcall(function() Lighting.Technology = LightingBackup.Technology end)
+        Lighting.GlobalShadows = LightingBackup.GlobalShadows
+        Lighting.ShadowSoftness = LightingBackup.ShadowSoftness
+        Lighting.Brightness = LightingBackup.Brightness
+        Lighting.ExposureCompensation = LightingBackup.ExposureCompensation
+        Lighting.EnvironmentDiffuseScale = LightingBackup.EnvironmentDiffuseScale
+        Lighting.EnvironmentSpecularScale = LightingBackup.EnvironmentSpecularScale
+        Lighting.Ambient = LightingBackup.Ambient
+        Lighting.OutdoorAmbient = LightingBackup.OutdoorAmbient
+        Lighting.FogStart = LightingBackup.FogStart
+        Lighting.FogEnd = LightingBackup.FogEnd
+    end
+
+    local cc = Lighting:FindFirstChild("MM22024FinalClip")
+    if cc then cc:Destroy() end
+end
+
+--// ============ PESO / SPEED GLITCH ============
+local MaxLimit, CurrentWeight = 50, 20.6
+local WeightName, OffsetAmount = "CoMWeight_Object", Vector3.new(0, 0, 6)
+
+local function ApplyPhysicsWeight(massValue)
+    local character = LocalPlayer.Character
+    if not character then return end
+    local root = character:WaitForChild("HumanoidRootPart", 5)
+    if not root then return end
+
+    local existing = character:FindFirstChild(WeightName)
+    if existing then existing:Destroy() end
+
+    if massValue > 0 then
+        local weight = Instance.new("Part")
+        weight.Name = WeightName
+        weight.Size = Vector3.new(1, 1, 1)
+        weight.Transparency = 1
+        weight.CanCollide = false
+        weight.CanQuery = false
+        weight.Parent = character
+
+        local weld = Instance.new("Weld")
+        weld.Part0, weld.Part1, weld.C0, weld.Parent = root, weight, CFrame.new(OffsetAmount), weight
+        
+        weight.Massless = false
+        weight.CustomPhysicalProperties = PhysicalProperties.new(massValue, 0.3, 0.5)
+    end
+end
+
+local function removerPeso()
+    local character = LocalPlayer.Character
+    if character then
+        local existing = character:FindFirstChild(WeightName)
+        if existing then existing:Destroy() end
+    end
+end
+
+--// ============ BOTÃ•ES ============
+criarBotao("UII1000X", 45, function(ativo)
+    if ativo then executarUII1000X() end
+end)
+
+criarBotao("CROSSHAIR", 92, function(ativo)
+    if ativo then executarCrosshair() end
+end)
+
+criarBotao("SPEED BITOTOSO", 139, function(ativo)
+    if ativo then executarSpeedBitotoso() end
+end)
+
+criarBotao("SPEED GLITCH", 186, function(ativo)
+    pesoAtivo = ativo
+    if ativo then ApplyPhysicsWeight(CurrentWeight) else removerPeso() end
+end)
+
+criarBotao("ÃUDIO 2:1", 233, function(ativo)
+    if ativo then ativarAudio() else desativarAudio() end
+end)
+
+criarBotao("MM2 LIGHTING", 280, function(ativo)
+    if ativo then
+        aplicarLighting()
+    else
+        removerLighting()
+    end
+end)
+
+--// Footer
+local Footer = Instance.new("TextLabel")
+Footer.Size = UDim2.new(1, 0, 0, 20)
+Footer.Position = UDim2.new(0, 0, 1, -20)
+Footer.BackgroundTransparency = 1
+Footer.Text = "Arraste para mover"
+Footer.TextColor3 = Color3.fromRGB(150, 150, 160)
+Footer.Font = Enum.Font.Gotham
+Footer.TextSize = 10
+Footer.Parent = Main
+
+--// Reaplica peso ao respawnar
+LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if pesoAtivo then ApplyPhysicsWeight(CurrentWeight) end
+end)
+
+print("[KWXHY] Painel carregado com sucesso!")
